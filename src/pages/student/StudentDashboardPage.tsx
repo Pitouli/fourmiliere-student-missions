@@ -48,8 +48,9 @@ export function StudentDashboardPage() {
   async function loadEvents() {
     setEventsLoading(true)
     setEventsError(null)
+    const today = new Date().toISOString().slice(0, 10)
     const { data, error: fnErr } = await callEdgeFunction<PublicEvent[]>(
-      'list-public-events',
+      `list-public-events?date_from=${today}&date_to=${today}`,
       { method: 'GET' },
     )
     // The function returns { events: [...] } not a flat array

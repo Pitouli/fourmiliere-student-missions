@@ -242,7 +242,10 @@ export function AdminTrackingPage() {
 // ============ Add Modal ============
 function AddParticipationModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [studentEmail, setStudentEmail] = useState('')
+  const [missionDate, setMissionDate] = useState('')
   const [events, setEvents] = useState<PublicEvent[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
+  const [eventsError, setEventsError] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<PublicEvent | null>(null)
   const [hours, setHours] = useState<number>(0)
   const [reason, setReason] = useState('')
@@ -250,13 +253,23 @@ function AddParticipationModal({ onClose, onSuccess }: { onClose: () => void; on
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!missionDate) {
+      setEvents([])
+      setSelectedEvent(null)
+      return
+    }
+    setSelectedEvent(null)
+    setEventsLoading(true)
+    setEventsError(null);
     (async () => {
       const { data, error: fnErr } = await callEdgeFunction<{ events: PublicEvent[] }>(
-        'list-public-events', { method: 'GET' },
+        `list-public-events?date_from=${missionDate}&date_to=${missionDate}`, { method: 'GET' },
       )
       if (!fnErr && data) setEvents(data.events)
+      else setEventsError(fnErr || 'Erreur lors du chargement des missions')
+      setEventsLoading(false)
     })()
-  }, [])
+  }, [missionDate])
 
   function handleSelectEvent(externalId: string) {
     const event = events.find((e) => e.external_id === externalId)
@@ -292,11 +305,27 @@ function AddParticipationModal({ onClose, onSuccess }: { onClose: () => void; on
               <input type="email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} className="input input-bordered w-full" required />
             </div>
             <div className="form-control">
+              <label className="label-text font-medium block mb-1">Date de la mission</label>
+              <input type="date" value={missionDate} onChange={(e) => setMissionDate(e.target.value)} className="input input-bordered w-full" required />
+            </div>
+            <div className="form-control">
               <label className="label-text font-medium block mb-1">Événement</label>
-              <select value={selectedEvent?.external_id || ''} onChange={(e) => handleSelectEvent(e.target.value)} className="select select-bordered w-full" required>
-                <option value="">Sélectionner...</option>
+              <select
+                value={selectedEvent?.external_id || ''}
+                onChange={(e) => handleSelectEvent(e.target.value)}
+                className="select select-bordered w-full"
+                required
+                disabled={!missionDate || eventsLoading}
+              >
+                <option value="">
+                  {!missionDate ? 'Sélectionnez d\'abord une date' : eventsLoading ? 'Chargement...' : 'Sélectionner...'}
+                </option>
                 {events.map((ev) => <option key={ev.external_id} value={ev.external_id}>{ev.name} ({ev.max_hours}h max)</option>)}
               </select>
+              {eventsError && <p className="text-error text-xs mt-1">{eventsError}</p>}
+              {missionDate && !eventsLoading && !eventsError && events.length === 0 && (
+                <p className="text-base-content/50 text-xs mt-1">Aucune mission ce jour-là</p>
+              )}
             </div>
             <div className="form-control">
               <label className="label-text font-medium block mb-1">Heures {selectedEvent && `(max: ${selectedEvent.max_hours}h)`}</label>
