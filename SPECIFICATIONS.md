@@ -8,7 +8,6 @@ L'application permet à des étudiants de faire valider les missions bénévoles
 
 Elle permet également :
 
-- aux associations de valider une mission à partir d'un QR code présenté par l'étudiant ;
  - aux associations de valider une mission via saisie d'un code secret sur le téléphone de l'étudiant ;
 - aux administrateurs de suivre les participations des étudiants ;
 - aux administrateurs d'exporter les données au format CSV ;
@@ -19,7 +18,7 @@ Elle permet également :
 
 L'application comprend trois espaces :
 
-1. **Espace étudiant** : identification, consultation des missions, création d'une demande de validation et génération d'un QR code.
+1. **Espace étudiant** : identification, consultation des missions, création d'une demande de validation.
 2. **Validation sur téléphone étudiant** : consultation de la demande, saisie du code secret par l'association depuis le téléphone de l'étudiant et validation.
 3. **Espace d'administration** : suivi, export, gestion des codes association et correction des participations.
 
@@ -44,7 +43,7 @@ Les hypothèses suivantes précisent les points non entièrement définis dans l
 3. L'authentification par lien magique (one-time link) n'est pas requise pour ce projet : la consultation des missions peut être ouverte et l'identification étudiante peut se faire par saisie d'email conservée en session locale.
 4. Les administrateurs utilisent l'authentification Supabase et doivent disposer d'un compte créé ou autorisé depuis le back-office Supabase.
 5. Une mission ne peut être enregistrée qu'une seule fois pour un même étudiant.
-6. Une demande de validation possède un identifiant aléatoire non prédictible transmis dans le QR code. L'email et le code association ne doivent pas être placés en clair dans l'URL.
+6. Une demande de validation possède un identifiant aléatoire non prédictible accessible depuis la session étudiante ou retourné au client lors de sa création. L'email et le code association ne doivent pas être placés en clair dans une URL.
 7. Les associations récupérées depuis l'API publique sont distinctes des associations configurées localement avec un code secret.
 8. Les codes association sont stockés sous forme de condensat cryptographique et ne sont jamais retournés par une API publique.
 9. Les durées, missions et associations doivent être revalidées côté serveur au moment de la validation, même si elles ont déjà été affichées par l'interface.
@@ -185,40 +184,15 @@ Le clic sur **Ajouter une mission** ouvre une fenêtre modale permettant de sél
 - Une mission déjà validée pour cet étudiant ne doit pas être proposée ou doit être indiquée comme indisponible.
 - Le serveur vérifie à nouveau l'existence et la durée maximale de la mission avant d'accepter une validation.
 
-### 4.4 Génération du QR code
 
-Après sélection de la mission, le serveur crée une demande de validation et retourne une URL publique de la forme :
-
-```text
-https://<domaine>/association/validation/<jeton-public>
-```
-
-Le QR code contient uniquement cette URL.
-
-Le jeton public doit être :
-
-- aléatoire ;
-- non prédictible ;
-- lié à une seule demande ;
-- utilisable une seule fois après validation ;
-- associé à une date d'expiration configurable.
-
-La page affiche :
-
-- le QR code ;
-- le nom de la mission ;
-- une instruction invitant l'association à scanner le code ;
-- éventuellement un lien copiable équivalent.
-
----
 
 ## 5. Parcours de validation par l'association
 
 ### 5.1 Accès à la page
 
-La page est accessible publiquement depuis l'URL contenue dans le QR code. Aucun compte association n'est requis.
+L'interface de validation est affichée sur le téléphone de l'étudiant immédiatement après la création de la demande. Aucun compte association n'est requis : l'association saisit son code secret sur l'interface présentée par l'étudiant.
 
-Le serveur récupère la demande à partir du jeton public et vérifie :
+Le serveur récupère la demande à partir de l'identifiant de demande transmis par le client et vérifie :
 
 - que la demande existe ;
 - qu'elle n'est pas expirée ;
@@ -229,11 +203,12 @@ Le serveur récupère la demande à partir du jeton public et vérifie :
 ### 5.2 Informations affichées
 
 - Nom de la mission.
-- Email de l'étudiant.
+- Email de l'étudiant (affiché en grand pour la lisibilité).
 - Nombre d'heures maximum de la mission.
 - Champ **Nombre d'heures réalisées**, initialisé avec le maximum.
-- Champ **Code association**, numérique à six chiffres.
-- Bouton **Valider la mission**.
+- Clavier numérique (numpad) avec touches disposées aléatoirement pour la saisie du **Code association** (six chiffres).
+- Champ d'entrée masqué affichant des étoiles pour chaque caractère saisi.
+- Boutons **Valider** et **Annuler**.
 
 ### 5.3 Saisie du nombre d'heures
 
@@ -248,13 +223,13 @@ Le serveur récupère la demande à partir du jeton public et vérifie :
 
 Lors de la soumission, une Cloud Function effectue les contrôles suivants dans cet ordre :
 
-1. Vérifier la présence et la validité du jeton de demande.
-2. Vérifier le format et normaliser l'email étudiant issu de la demande.
+1. Vérifier que la demande de validation identifiée par l'`id` fourni existe et est toujours `pending`.
+2. Vérifier le format et normaliser l'email étudiant associé à la demande.
 3. Vérifier que la mission existe toujours dans le référentiel public.
 4. Récupérer la durée maximale à jour de la mission depuis l'API publique.
 5. Vérifier que le nombre d'heures est numérique et compris entre zéro et le maximum inclus.
 6. Vérifier que le code association contient exactement six chiffres.
-7. Identifier l'association locale correspondant au code fourni.
+7. Identifier l'association locale correspondant au code fourni (comparaison sécurisée du condensat).
 8. Vérifier, si le service public le permet, que l'association existe toujours dans le référentiel public.
 9. Vérifier que la mission n'est pas déjà enregistrée pour cet étudiant.
 10. Enregistrer la participation dans une transaction.
@@ -461,21 +436,20 @@ Entrée :
 }
 ```
 
-L'email est obtenu depuis la session authentifiée ou, pour la version simplifiée, transmis puis validé explicitement.
+L'email est obtenu depuis la session ou, pour la version simplifiée, transmis puis validé explicitement.
 
 Traitements :
 
 - validation de la mission ;
 - contrôle de l'absence de participation existante ;
 - invalidation facultative des anciennes demandes en attente pour la même paire étudiant/mission ;
-- création d'un jeton aléatoire ;
-- enregistrement de la demande ;
-- retour de l'URL à encoder en QR code.
+- création et enregistrement d'une demande de validation (statut `pending`) ;
+- retour de l'`id` de la demande et des informations nécessaires pour afficher l'interface de validation sur le téléphone de l'étudiant.
 
 #### `get-validation-request`
 
-- Prend un jeton public.
-- Retourne uniquement les informations nécessaires à la validation.
+- Prend un `validationRequestId`.
+- Retourne uniquement les informations nécessaires à la validation (mission, heures, email affichable, statut).
 - Ne retourne jamais de code association ni d'information d'administration.
 
 #### `validate-participation`
@@ -484,13 +458,13 @@ Entrée :
 
 ```json
 {
-  "token": "string",
+  "validationRequestId": "uuid",
   "associationCode": "012345",
   "hours": 3.5
 }
 ```
 
-- Exécute tous les contrôles métier.
+- Exécute tous les contrôles métier (voir section 5.4).
 - Crée la participation de manière transactionnelle.
 - Marque la demande comme utilisée.
 - Garantit l'idempotence et l'absence de doublon.
@@ -567,7 +541,7 @@ Représente les étudiants connus par leur adresse email.
 | Colonne | Type | Contraintes | Description |
 |---|---|---|---|
 | `id` | `uuid` | PK | Identifiant interne |
-| `auth_user_id` | `uuid` | UNIQUE, nullable, FK vers `auth.users` | Compte Supabase si lien magique utilisé |
+| `auth_user_id` | `uuid` | UNIQUE, nullable, FK vers `auth.users` | Compte Supabase si un compte Supabase est lié |
 | `email` | `citext` | NOT NULL, UNIQUE | Email normalisé |
 | `created_at` | `timestamptz` | NOT NULL | Date de création |
 | `updated_at` | `timestamptz` | NOT NULL | Date de mise à jour |
@@ -609,12 +583,12 @@ Stocke les associations configurées localement et leur secret de validation.
 
 ### 8.6 Table `validation_requests`
 
-Stocke les demandes temporaires représentées par les QR codes.
+Stocke les demandes temporaires de validation.
 
 | Colonne | Type | Contraintes | Description |
 |---|---|---|---|
 | `id` | `uuid` | PK | Identifiant interne |
-| `public_token_hash` | `text` | NOT NULL, UNIQUE | Empreinte du jeton public |
+| `public_token_hash` | `text` | NOT NULL, UNIQUE | Empreinte du jeton public (si applicable) |
 | `student_id` | `uuid` | NOT NULL, FK | Étudiant concerné |
 | `mission_id` | `uuid` | NOT NULL, FK | Mission concernée |
 | `status` | `text` | NOT NULL, CHECK | `pending`, `validated`, `expired`, `cancelled` |
@@ -714,7 +688,7 @@ Cette vue peut être utilisée pour le tableau étudiant, les totaux et les expo
 ### 9.1 Contrôle d'accès
 
 - Activer Row Level Security sur toutes les tables exposées par Supabase.
-- Les étudiants ne peuvent lire que leurs propres données lorsqu'une authentification par lien magique est utilisée.
+- Les étudiants peuvent consulter les missions sans lien magique ; l'identification peut se faire par saisie d'email conservée en session locale. Les opérations sensibles restent contrôlées côté serveur.
 - Les visiteurs de la page association n'accèdent jamais directement aux tables.
 - Les validations passent exclusivement par une Cloud Function utilisant des droits serveur.
 - Les administrateurs sont contrôlés par rôle côté serveur.
@@ -724,19 +698,18 @@ Cette vue peut être utilisée pour le tableau étudiant, les totaux et les expo
 
 - Ne jamais stocker ni journaliser le code en clair.
 - Ne jamais retourner le code existant dans l'administration.
-- Limiter le nombre de tentatives par jeton, adresse IP et fenêtre temporelle.
+- Limiter le nombre de tentatives par demande, adresse IP et fenêtre temporelle.
 - Ajouter un délai progressif après plusieurs échecs.
 - Journaliser les volumes anormaux sans enregistrer le code soumis.
 - Permettre à un administrateur de remplacer immédiatement un code compromis.
 
-### 9.3 Protection des QR codes
+### 9.3 Protection des sessions de validation
 
-- Utiliser au minimum 128 bits d'aléa cryptographique.
-- Ne pas incorporer l'email dans l'URL.
-- Stocker uniquement l'empreinte du jeton si possible.
-- Définir une expiration, par exemple 7 jours, configurable.
-- Refuser toute réutilisation après validation.
-- Prévoir l'invalidation automatique des demandes obsolètes.
+- Générer des identifiants de demande non prédictibles et de forte entropie.
+- Ne pas exposer de secret (code association) dans une URL ou dans les journaux.
+- Stocker uniquement les empreintes/condensats nécessaires (ne jamais stocker les codes en clair).
+- Définir une expiration pour une demande de validation (par exemple 7 jours, configurable).
+- Refuser toute réutilisation après validation et prévoir l'invalidation automatique des demandes obsolètes.
 
 ### 9.4 Intégrité et concurrence
 
@@ -746,7 +719,7 @@ La validation doit être transactionnelle et s'appuyer sur la contrainte unique 
 
 - L'email est une donnée personnelle.
 - Limiter les informations affichées sur la page publique au strict nécessaire.
-- Informer l'étudiant que son email sera visible par l'association qui scanne le QR code.
+ - Informer l'étudiant que son email sera visible par l'association lors de la validation sur son téléphone.
 - Définir une durée de conservation des demandes expirées, journaux et participations.
 - Prévoir les mécanismes de rectification et de suppression selon les règles applicables au projet.
 - Protéger les exports CSV et limiter leur accès aux administrateurs autorisés.
@@ -822,9 +795,9 @@ Les opérations suivantes doivent être idempotentes ou protégées contre les r
 
 Lorsque l'étudiant ouvre la modale d'ajout, la liste est récupérée via une Cloud Function et aucun appel direct à l'API publique n'est réalisé par le navigateur.
 
-### CA-005 — Génération du QR code
+### CA-005 — Validation depuis le téléphone de l'étudiant
 
-Étant donné une mission valide non encore réalisée, lorsque l'étudiant génère une demande, alors un QR code contenant une URL opaque et temporaire est affiché.
+Étant donné une mission valide non encore réalisée, lorsque l'étudiant initie une demande, alors l'interface de validation s'affiche sur son téléphone et permet à une personne de l'association de saisir le code secret pour valider la mission.
 
 ### CA-006 — Durée par défaut
 
@@ -870,10 +843,10 @@ Un utilisateur non administrateur ne peut ni charger les données administrative
 
 ## 13. Points à arbitrer avant développement
 
-1. **Authentification étudiante** : lien magique recommandé ou simple session basée sur un email déclaré.
+1. **Authentification étudiante** : lien magique retiré — simple session basée sur un email déclaré.
 2. **Valeur zéro** : confirmer qu'une participation de zéro heure doit pouvoir être enregistrée plutôt que rejetée.
 3. **Précision des heures** : heures entières, quarts d'heure ou toute valeur décimale à deux chiffres.
-4. **Expiration du QR code** : durée de validité attendue.
+4. **Expiration des demandes de validation** : durée de validité attendue.
 5. **Association et mission** : confirmer si toute association configurée peut valider toute mission ou si certaines associations doivent être limitées à certaines missions.
 6. **Association affichée à l'étudiant** : confirmer si son nom doit apparaître dans l'historique.
 7. **Modification administrative** : confirmer si l'administrateur peut modifier directement une participation ou seulement la supprimer puis la recréer.
