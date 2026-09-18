@@ -1,0 +1,38 @@
+[functions.list-public-events]
+verify_jwt = false
+
+[functions.list-public-organisations]
+verify_jwt = false
+
+[functions.create-validation-request]
+verify_jwt = false
+
+[functions.get-validation-request]
+verify_jwt = false
+
+[functions.validate-participation]
+verify_jwt = false
+
+[functions.admin-export-participations]
+verify_jwt = true
+
+[functions.admin-create-participation]
+verify_jwt = true
+
+[functions.admin-update-participation]
+verify_jwt = true
+
+[functions.admin-delete-participation]
+verify_jwt = true
+
+[functions.admin-list-participations]
+verify_jwt = true
+
+[functions.admin-upsert-organization-code]
+verify_jwt = true
+
+[functions.admin-list-organization-codes]
+verify_jwt = true
+
+[functions.admin-audit-logs]
+verify_jwt = true

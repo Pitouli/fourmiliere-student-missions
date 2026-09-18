@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+.numpad-btn {
+  user-select: none;
+  transition: transform 0.08s ease, background-color 0.15s ease;
+}
+
+.numpad-btn:active {
+  transform: scale(0.92);
+}
