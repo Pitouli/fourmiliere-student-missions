@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { BrandLogo } from '@/components/BrandLogo'
 
 export function AdminLoginPage() {
   const { signIn, adminInfo, loading } = useAuth()
@@ -37,11 +38,7 @@ export function AdminLoginPage() {
     <div className="min-h-screen bg-base-200 flex items-center justify-center safe-top safe-bottom px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-3">
-            <svg className="w-8 h-8 text-primary-content" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
-          </div>
+          <BrandLogo className="w-14 h-14 rounded-2xl bg-base-100 ring-1 ring-base-300 mb-3 shadow-md shadow-base-300/30" />
           <h1 className="text-2xl font-bold text-base-content">Administration</h1>
           <p className="text-base-content/60 mt-1">Connectez-vous pour accéder à l'espace de gestion</p>
         </div>

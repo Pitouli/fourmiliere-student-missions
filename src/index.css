@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,6 +12,7 @@
   --brand-slate: #2d3142;
   --brand-mint: #e6f2ed;
   --brand-blush: #fadedeb;
+  --brand-rose: #f5d3cf;
 }
 
 * {
@@ -44,9 +45,9 @@ h4,
 h5,
 h6,
 .font-display {
-  font-family: 'Caveat', 'Nunito', cursive;
+  font-family: 'Nunito', system-ui, sans-serif;
   color: var(--brand-burgundy);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 .btn {
