@@ -1,6 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --brand-pink: #f27c71;
+  --brand-mustard: #eab059;
+  --brand-burgundy: #5a1b22;
+  --brand-slate: #2d3142;
+  --brand-mint: #e6f2ed;
+  --brand-blush: #fadedeb;
+}
 
 * {
   -webkit-tap-highlight-color: transparent;
@@ -13,7 +25,9 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Nunito', system-ui, sans-serif;
+  background: linear-gradient(180deg, #fffaf8 0%, #ffffff 100%);
+  color: var(--brand-slate);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
@@ -21,6 +35,53 @@ body {
 
 #root {
   min-height: 100dvh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display {
+  font-family: 'Caveat', 'Nunito', cursive;
+  color: var(--brand-burgundy);
+  letter-spacing: 0.02em;
+}
+
+.btn {
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 24px rgba(90, 27, 34, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(90, 27, 34, 0.12);
+}
+
+.btn-primary {
+  background-color: var(--brand-mustard) !important;
+  border-color: var(--brand-mustard) !important;
+  color: var(--brand-slate) !important;
+}
+
+.btn-primary:hover {
+  filter: brightness(0.98);
+}
+
+.btn-secondary {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(45, 49, 66, 0.12) !important;
+  color: var(--brand-slate) !important;
+}
+
+.btn-accent {
+  background-color: var(--brand-pink) !important;
+  border-color: var(--brand-pink) !important;
+  color: #ffffff !important;
 }
 
 .safe-top {
